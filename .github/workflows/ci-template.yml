@@ -1,0 +1,44 @@
+name: CI/CD Template
+
+on:
+  workflow_call:
+    inputs:
+      build-command:
+        required: true
+        type: string
+      test-command:
+        required: true
+        type: string
+      deploy-command:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: ${{ inputs.build-command }}
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Test
+        run: ${{ inputs.test-command }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy
+        run: ${{ inputs.deploy-command }}
