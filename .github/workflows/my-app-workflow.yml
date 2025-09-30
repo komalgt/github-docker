@@ -1,7 +1,13 @@
-name: My App..
+name: Calling reusable template
 
 on:
   push:
+    branches:
+      - main
+    paths:
+      - my-app-workflow.yml
+      - .github/workflows/my-app-workflow.yml
+  pull_request:
     branches:
       - main
     paths:
