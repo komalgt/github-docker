@@ -1,0 +1,13 @@
+name: My App CI/CD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  use-reusable-workflow:
+    uses: ./.github/workflows/reusable-template.yml
+    with:
+      build_script: "npm install && npm run build"
+      test_script: "npm test"
+      deploy_script: "sh ./scripts/deploy.sh"
