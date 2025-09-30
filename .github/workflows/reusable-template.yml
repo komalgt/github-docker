@@ -1,0 +1,30 @@
+name: Reusable Build/Test/Deploy
+
+on:
+  workflow_call:
+    inputs:
+      build_script:
+        required: true
+        type: string
+      test_script:
+        required: true
+        type: string
+      deploy_script:
+        required: true
+        type: string
+
+jobs:
+  run-workflow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Build step
+        run: ${{ inputs.build_script }}
+
+      - name: Test step
+        run: ${{ inputs.test_script }}
+
+      - name: Deploy step
+        run: ${{ inputs.deploy_script }}
