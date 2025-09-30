@@ -1,0 +1,22 @@
+name: Reusable Docker Build
+
+on:
+  workflow_call:
+    inputs:
+      image_name:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+
+jobs:
+  build_docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build and tag Docker image
+        run: |
+          docker build -t ${{ inputs.image_name }}:${{ inputs.image_tag }} .
