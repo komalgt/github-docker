@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 name: Calling reusable templates...!
+=======
+name: Main Workflow - Build/Test/Deploy and Docker
+>>>>>>> 1f5efa59c96bce0f00be95d79f7db476f707d9f7
 
 on:
   push:
@@ -21,3 +25,9 @@ jobs:
       build_script: "npm install && npm run build"
       test_script: "npm test"
       deploy_script: "sh ./scripts/deploy.sh"
+
+  docker-build:
+    uses: ./.github/workflows/docker-reusable.yml
+    with:
+      image_name: "myapp"
+      image_tag: "v1.2.3"
