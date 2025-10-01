@@ -2,8 +2,8 @@ name: Deploy image to ECS
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*'
 
 env:
   AWS_REGION: ap-south-1                  # Update as needed
