@@ -1,4 +1,4 @@
-name: Deploy image to ECS
+name: Deploy image to ECS on git tag
 
 on:
   push:
