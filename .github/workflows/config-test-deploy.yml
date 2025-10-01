@@ -6,7 +6,9 @@ on:
 jobs:
   configure-and-call:
     runs-on: ubuntu-latest
-
+    outputs:
+      cpu: ${{ steps.config.outputs.cpu }}
+      memory: ${{ steps.config.outputs.memory }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -24,15 +26,9 @@ jobs:
           echo "CPU set to ${{ steps.config.outputs.cpu }}"
           echo "Memory set to ${{ steps.config.outputs.memory }}"
 
-    # Call the reusable workflow, passing the config as inputs
-    outputs:
-      cpu: ${{ steps.config.outputs.cpu }}
-      memory: ${{ steps.config.outputs.memory }}
-
   call-reusable:
     needs: configure-and-call
-uses: komalgt/github-docker/.github/workflows/config-reusable-deploy.yml@main
+    uses: komalgt/github-docker/.github/workflows/config-reusable-deploy.yml@main
     with:
       cpu: ${{ needs.configure-and-call.outputs.cpu }}
       memory: ${{ needs.configure-and-call.outputs.memory }}
-
