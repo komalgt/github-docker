@@ -1,10 +1,10 @@
-name: ECS Deploy for multiple env.
+name: ECS Deploy
 
 on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Deploy to environment"
+        description: "Deployment environment"
         required: true
         default: 'staging'
         type: choice
@@ -16,25 +16,23 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      AWS_REGION: ap-south-1
+      AWS_REGION: us-east-1 # Adjust this as needed
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Load environment config
-        id: envfile
+      - name: Load environment variables from file
         run: |
-          ENV_FILE=configs/env.${{ github.event.inputs.environment }}
-          echo "Loading environment from $ENV_FILE"
-          set -a
-          source $ENV_FILE
-          set +a
-          # Echo out for debug
-          echo "ECS_CLUSTER=$ECS_CLUSTER"
-          echo "ECS_SERVICE=$ECS_SERVICE"
-          echo "IMAGE_TAG=$IMAGE_TAG"
-        shell: bash
+          ENV_FILE="configs/env.${{ github.event.inputs.environment }}"
+          echo "Loading environment config from $ENV_FILE"
+          # Export each non-empty, non-comment line to GITHUB_ENV for later steps
+          while IFS='=' read -r key value; do
+            # Skip empty lines and comments
+            if [[ -n "$key" && ! "$key" =~ ^# ]]; then
+              echo "$key=$value" >> $GITHUB_ENV
+            fi
+          done < "$ENV_FILE"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -43,11 +41,16 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Show loaded environment config
+        run: |
+          echo "ECS_CLUSTER=$ECS_CLUSTER"
+          echo "ECS_SERVICE=$ECS_SERVICE"
+          echo "IMAGE_TAG=$IMAGE_TAG"
+
       - name: Deploy to ECS
         run: |
           aws ecs update-service \
-            --cluster $ECS_CLUSTER \
-            --service $ECS_SERVICE \
+            --cluster "$ECS_CLUSTER" \
+            --service "$ECS_SERVICE" \
             --force-new-deployment
-          echo "Deployed to $ECS_CLUSTER / $ECS_SERVICE with tag $IMAGE_TAG"
         shell: bash
