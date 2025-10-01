@@ -16,8 +16,8 @@ jobs:
       - name: Read deployment config from JSON
         id: config
         run: |
-          CPU=$(jq -r .cpu .github/deployment-config.json)
-          MEMORY=$(jq -r .memory .github/deployment-config.json)
+          CPU=$(jq -r .cpu .github/config.json)
+          MEMORY=$(jq -r .memory .github/config.json)
           echo "cpu=$CPU" >> $GITHUB_OUTPUT
           echo "memory=$MEMORY" >> $GITHUB_OUTPUT
 
