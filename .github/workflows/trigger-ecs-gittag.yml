@@ -1,12 +1,9 @@
-name: Deploy image to ECS with git tag
+name: Deploy image to ECS on tagged release
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - trigger-ecs-gittag.yml
-      - .github/workflows/trigger-ecs-gittag.yml
+    tags:
+      - 'v*'           # This will trigger for tags like 'v1.0.0', 'v2', etc.
 
 env:
   AWS_REGION: ap-south-1
