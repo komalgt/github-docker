@@ -33,7 +33,6 @@ jobs:
     if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.rollback != 'true') }}
     name: Build, Push & Deploy
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -94,15 +93,16 @@ jobs:
     uses: ./.github/workflows/ecs-rollback.yml
     with:
       previous_image_tag: ${{ github.event.inputs.previous_image_tag }}
-      aws_region: ap-south-1
-      ecs_cluster: doc-cluster
-      ecs_service: doc-task-service
-      task_family: doc-task
-      container_name: doc-task
-      ecr_repo: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/myappservice
+      aws_region: ${{ env.AWS_REGION }}
+      ecs_cluster: ${{ env.ECS_CLUSTER }}
+      ecs_service: ${{ env.ECS_SERVICE }}
+      task_family: ${{ env.TASK_DEFINITION_FAMILY }}
+      container_name: ${{ env.CONTAINER_NAME }}
+      ecr_repo_name: ${{ env.ECR_REPOSITORY }}
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
   email_notify_success:
     needs: [deploy, rollback]
@@ -135,3 +135,4 @@ jobs:
           from: komalgt@gmail.com
           subject: 'ECS Workflow FAILED'
           body: 'The ECS workflow failed. Please check workflow logs for troubleshooting.'
+
