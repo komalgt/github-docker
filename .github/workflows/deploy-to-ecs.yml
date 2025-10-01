@@ -103,3 +103,4 @@ jobs:
           from: komalgt@gmail.com
           subject: 'ECS Deployment FAILED'
           body: 'The ECS deployment failed. Please check workflow logs for troubleshooting.'
+
