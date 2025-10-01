@@ -1,0 +1,81 @@
+name: ECS Rollback
+
+on:
+  workflow_call:
+    inputs:
+      previous_image_tag:
+        required: true
+        type: string
+      aws_region:
+        required: true
+        type: string
+      ecs_cluster:
+        required: true
+        type: string
+      ecs_service:
+        required: true
+        type: string
+      container_name:
+        required: true
+        type: string
+      task_definition_family:
+        required: true
+        type: string
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (optional)
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Get latest task definition
+        id: get_task_def
+        run: |
+          export TASK_DEF_ARN=$(aws ecs describe-services \
+            --cluster "${{ inputs.ecs_cluster }}" \
+            --services "${{ inputs.ecs_service }}" \
+            --query 'services[0].taskDefinition' \
+            --output text)
+          echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
+          aws ecs describe-task-definition --task-definition "$TASK_DEF_ARN" \
+            --query 'taskDefinition' > task-def.json
+
+      - name: Update container image tag in task definition
+        id: update_td
+        run: |
+          IMAGE_REPO=$(jq -r '.containerDefinitions[] | select(.name == "${{ inputs.container_name }}") | .image' task-def.json | awk -F: '{print $1}')
+          NEW_IMAGE="$IMAGE_REPO:${{ inputs.previous_image_tag }}"
+          jq --arg cname "${{ inputs.container_name }}" --arg newimg "$NEW_IMAGE" \
+            '(.containerDefinitions[] | select(.name == $cname) | .image) |= $newimg' \
+            task-def.json > new-task-def.json
+          # Remove some fields AWS doesn't accept in register
+          jq 'del(
+            .revision,
+            .status,
+            .requiresAttributes,
+            .compatibilities,
+            .registeredBy,
+            .registeredAt,
+            .taskDefinitionArn
+          )' new-task-def.json > cleaned-task-def.json
+
+      - name: Register new task definition and update service
+        id: register_update
+        run: |
+          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://cleaned-task-def.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "New task definition: $NEW_TASK_DEF_ARN"
+          aws ecs update-service \
+            --cluster "${{ inputs.ecs_cluster }}" \
+            --service "${{ inputs.ecs_service }}" \
+            --task-definition "$NEW_TASK_DEF_ARN"
