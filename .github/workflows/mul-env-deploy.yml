@@ -1,0 +1,53 @@
+name: ECS Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deploy to environment"
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-1 # Or your AWS region
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Load environment config
+        id: envfile
+        run: |
+          ENV_FILE=configs/env.${{ github.event.inputs.environment }}
+          echo "Loading environment from $ENV_FILE"
+          set -a
+          source $ENV_FILE
+          set +a
+          # Echo out for debug
+          echo "ECS_CLUSTER=$ECS_CLUSTER"
+          echo "ECS_SERVICE=$ECS_SERVICE"
+          echo "IMAGE_TAG=$IMAGE_TAG"
+        shell: bash
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $ECS_SERVICE \
+            --force-new-deployment
+          echo "Deployed to $ECS_CLUSTER / $ECS_SERVICE with tag $IMAGE_TAG"
+        shell: bash
