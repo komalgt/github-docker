@@ -1,11 +1,79 @@
-name: Tag Test Workflow
+name: Deploy or Rollback image to ECS
+
 on:
   push:
     tags:
       - 'v*'
 
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY: myappservice
+  ECS_CLUSTER: doc-cluster
+  ECS_SERVICE: doc-task-service
+  TASK_DEFINITION_FAMILY: doc-task
+  CONTAINER_NAME: doc-task
+  IMAGE_TAG: ${{ github.sha }}
+
 jobs:
-  test:
+  deploy:
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.rollback != 'true') }}
+    name: Build, Push & Deploy
     runs-on: ubuntu-latest
+
     steps:
-      - run: echo "Triggered by tag ${{ github.ref }}"
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ap-south-1 | \
+            docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com
+
+      - name: Build Docker image
+        run: |
+          docker build -t myappservice:${{ github.sha }} .
+
+      - name: Tag Docker image
+        run: |
+          docker tag myappservice:${{ github.sha }} ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/myappservice:${{ github.sha }}
+
+      - name: Push Docker image to Amazon ECR
+        run: |
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/myappservice:${{ github.sha }}
+
+      - name: Download current ECS task definition
+        id: task-def
+        run: |
+          aws ecs describe-task-definition --task-definition doc-task > task-def.json
+
+      - name: Update task definition with new image
+        id: new-task-def
+        run: |
+          IMAGE_URI="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/myappservice:${{ github.sha }}"
+          jq --arg IMAGE_URI "$IMAGE_URI" --arg CONTAINER_NAME "doc-task" '
+            .taskDefinition |
+            .containerDefinitions |=
+              (map(if .name == $CONTAINER_NAME then .image = $IMAGE_URI else . end)) |
+            del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
+          ' task-def.json > new-task-def.json
+
+      - name: Register new ECS task definition revision
+        id: register-task-def
+        run: |
+          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://new-task-def.json --query "taskDefinition.taskDefinitionArn" --output text)
+          echo "NEW_TASK_DEF_ARN=$NEW_TASK_DEF_ARN" >> $GITHUB_ENV
+
+      - name: Update ECS service to new task definition
+        run: |
+          aws ecs update-service --cluster doc-cluster --service doc-task-service --task-definition $NEW_TASK_DEF_ARN
+
+
+
+  
