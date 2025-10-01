@@ -12,21 +12,19 @@ jobs:
   grype-scan:
     runs-on: ubuntu-latest
     steps:
-      # Checkout your repo (optional, useful for audit/logging)
+      # Checkout your repo
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      # Log in to Amazon ECR
+      # Authenticate to ECR
       - name: Authenticate to ECR
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
-          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-          aws configure set region $AWS_REGION
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 792394825386.dkr.ecr.${AWS_REGION}.amazonaws.com
+          aws ecr get-login-password --region $AWS_REGION | \
+            docker login --username AWS --password-stdin 792394825386.dkr.ecr.$AWS_REGION.amazonaws.com
 
       # Install Grype
       - name: Install Grype
