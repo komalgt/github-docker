@@ -1,4 +1,4 @@
-name: ECS Deploy
+name: ECS Deploy for multiple env.
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      AWS_REGION: us-east-1 # Or your AWS region
+      AWS_REGION: ap-south-1
 
     steps:
       - name: Checkout repo
