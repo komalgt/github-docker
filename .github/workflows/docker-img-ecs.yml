@@ -87,19 +87,19 @@ jobs:
       - name: Update ECS service to new task definition
         run: |
           aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $NEW_TASK_DEF_ARN
-
-  rollback:
+          
+rollback:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.rollback == 'true' }}
     name: Rollback ECS deployment
     uses: ./.github/workflows/ecs-rollback.yml
     with:
       previous_image_tag: ${{ github.event.inputs.previous_image_tag }}
-      aws_region: ${{ env.AWS_REGION }}
-      ecs_cluster: ${{ env.ECS_CLUSTER }}
-      ecs_service: ${{ env.ECS_SERVICE }}
-      task_family: ${{ env.TASK_DEFINITION_FAMILY }}
-      container_name: ${{ env.CONTAINER_NAME }}
-      ecr_repo: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}
+      aws_region: ap-south-1
+      ecs_cluster: doc-cluster
+      ecs_service: doc-task-service
+      task_family: doc-task
+      container_name: doc-task
+      ecr_repo: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/myappservice
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
