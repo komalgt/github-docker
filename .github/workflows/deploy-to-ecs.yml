@@ -1,7 +1,9 @@
 name: ECS Deploy Test Workflow
 
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   deploy:
