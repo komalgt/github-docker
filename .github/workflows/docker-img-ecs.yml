@@ -2,8 +2,6 @@ name: Deploy or Rollback image to ECS
 
 on:
   push:
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
       rollback:
