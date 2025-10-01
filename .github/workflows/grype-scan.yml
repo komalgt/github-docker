@@ -1,0 +1,20 @@
+name: Container Image Vulnerability Scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: 'Image to scan (e.g. nginx:latest or busybox:1.36)'
+        required: true
+        default: 'nginx:latest'
+
+jobs:
+  grype-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Grype
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Scan container image
+        run: grype ${{ github.event.inputs.image }} --fail-on high --output table
