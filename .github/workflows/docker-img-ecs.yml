@@ -103,3 +103,15 @@ jobs:
           from: komalgt@gmail.com
           subject: 'ECS Deployment FAILED'
           body: 'The ECS deployment failed. Please check workflow logs for troubleshooting.'
+
+  rollback:
+    # Only runs for manual triggers (workflow_dispatch) so you won't accidentally roll back on normal tag push
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    uses: your-org/your-repo/.github/workflows/ecs-rollback.yml@main
+    with:
+      previous_image_tag: "your-old-image-tag"
+      aws_region: ${{ env.AWS_REGION }}
+      ecs_cluster: ${{ env.ECS_CLUSTER }}
+      ecs_service: ${{ env.ECS_SERVICE }}
+      container_name: ${{ env.CONTAINER_NAME }}
+      task_definition_family: ${{ env.TASK_DEFINITION_FAMILY }}
