@@ -2,11 +2,8 @@ name: Deploy image to ECS with git tag
 
 on:
   push:
-  branches:
-      - main
-    paths:
-      - trigger-ecs-gittag.yml
-      - .github/workflows/trigger-ecs-gittag.yml
+    tags:
+      - 'v*'
 
 env:
   AWS_REGION: ap-south-1
@@ -15,14 +12,11 @@ env:
   ECS_SERVICE: doc-task-service
   TASK_DEFINITION_FAMILY: doc-task
   CONTAINER_NAME: doc-task
-  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   deploy:
-    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.rollback != 'true') }}
     name: Build, Push & Deploy
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -32,35 +26,35 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         run: |
-          aws ecr get-login-password --region ap-south-1 | \
-            docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com
+          aws ecr get-login-password --region $AWS_REGION | \
+            docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com
 
       - name: Build Docker image
         run: |
-          docker build -t myappservice:${{ github.sha }} .
+          docker build -t $ECR_REPOSITORY:${{ github.sha }} .
 
       - name: Tag Docker image
         run: |
-          docker tag myappservice:${{ github.sha }} ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/myappservice:${{ github.sha }}
+          docker tag $ECR_REPOSITORY:${{ github.sha }} ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }}
 
       - name: Push Docker image to Amazon ECR
         run: |
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/myappservice:${{ github.sha }}
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }}
 
       - name: Download current ECS task definition
         id: task-def
         run: |
-          aws ecs describe-task-definition --task-definition doc-task > task-def.json
+          aws ecs describe-task-definition --task-definition $TASK_DEFINITION_FAMILY > task-def.json
 
       - name: Update task definition with new image
         id: new-task-def
         run: |
-          IMAGE_URI="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/myappservice:${{ github.sha }}"
-          jq --arg IMAGE_URI "$IMAGE_URI" --arg CONTAINER_NAME "doc-task" '
+          IMAGE_URI="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY}:${{ github.sha }}"
+          jq --arg IMAGE_URI "$IMAGE_URI" --arg CONTAINER_NAME "$CONTAINER_NAME" '
             .taskDefinition |
             .containerDefinitions |=
               (map(if .name == $CONTAINER_NAME then .image = $IMAGE_URI else . end)) |
@@ -75,8 +69,4 @@ jobs:
 
       - name: Update ECS service to new task definition
         run: |
-          aws ecs update-service --cluster doc-cluster --service doc-task-service --task-definition $NEW_TASK_DEF_ARN
-
-
-
-  
+          aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $NEW_TASK_DEF_ARN
