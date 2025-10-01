@@ -2,8 +2,11 @@ name: Deploy image to ECS with git tag
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+    paths:
+      - trigger-ecs-gittag.yml
+      - .github/workflows/trigger-ecs-gittag.yml
 
 env:
   AWS_REGION: ap-south-1
@@ -70,3 +73,35 @@ jobs:
       - name: Update ECS service to new task definition
         run: |
           aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service ${{ env.ECS_SERVICE }} --task-definition $NEW_TASK_DEF_ARN
+
+  email_notify_success:
+    needs: deploy
+    if: ${{ success() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          to: kturakannavar@deloitte.com
+          from: komalgt@gmail.com
+          subject: 'ECS Deployment Successful'
+          body: 'The ECS deployment was successful. Check workflow run for details.'
+
+  email_notify_failure:
+    needs: deploy
+    if: ${{ failure() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          to: kturakannavar@deloitte.com
+          from: komalgt@gmail.com
+          subject: 'ECS Deployment FAILED'
+          body: 'The ECS deployment failed. Please check workflow logs for troubleshooting.'
