@@ -1,4 +1,4 @@
-name: Build and Deploy Example
+name: Test artifact
 
 on:
   workflow_dispatch:
