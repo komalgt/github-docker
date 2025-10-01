@@ -1,4 +1,4 @@
-name: Deploy or Rollback image to ECS
+name: Deploy image to ECS with git tag
 
 on:
   push:
