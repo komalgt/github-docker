@@ -6,19 +6,18 @@ on:
       - 'v*'
 
 env:
-  AWS_REGION: ap-south-1                  # Update as needed
-  ECR_REPOSITORY: myappservice            # Your ECR repository name
-  ECS_CLUSTER: doc-cluster            # Your ECS cluster name
-  ECS_SERVICE: doc-task-service            # Your ECS service name
-  TASK_DEFINITION_FAMILY: doc-task # Your ECS task definition name
-  CONTAINER_NAME: doc-task                    # Container name inside task def
-  IMAGE_TAG: ${{ github.sha }}           # Use Git SHA for image tag
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY: myappservice
+  ECS_CLUSTER: doc-cluster
+  ECS_SERVICE: doc-task-service
+  TASK_DEFINITION_FAMILY: doc-task
+  CONTAINER_NAME: doc-task
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   deploy:
     name: Build, Push & Deploy
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -72,3 +71,35 @@ jobs:
       - name: Update ECS service to new task definition
         run: |
           aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $NEW_TASK_DEF_ARN
+
+  email_notify_success:
+    needs: deploy
+    if: ${{ success() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          to: kturakannavar@deloitte.com
+          from: komalgt@gmail.com
+          subject: 'ECS Deployment Successful'
+          body: 'The ECS deployment was successful. Check workflow run for details.'
+
+  email_notify_failure:
+    needs: deploy
+    if: ${{ failure() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          to: kturakannavar@deloitte.com
+          from: komalgt@gmail.com
+          subject: 'ECS Deployment FAILED'
+          body: 'The ECS deployment failed. Please check workflow logs for troubleshooting.'
