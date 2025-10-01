@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       image:
-        description: 'ECR image to scan (example: 792394825386.dkr.ecr.ap-south-1.amazonaws.com/myappservice:4c2d68a297768e178f8d0182368ad6da865ca3c6)'
+        description: 'ECR image to scan (e.g., 792394825386.dkr.ecr.ap-south-1.amazonaws.com/myappservice:latest)'
         required: true
         default: '792394825386.dkr.ecr.ap-south-1.amazonaws.com/myappservice:latest'
 
@@ -12,9 +12,15 @@ jobs:
   grype-scan:
     runs-on: ubuntu-latest
     steps:
-      # Checkout your repo
+      # (Optional) Checkout your repo
       - name: Checkout repo
         uses: actions/checkout@v3
+
+      # Install AWS CLI (if not present)
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
 
       # Authenticate to ECR
       - name: Authenticate to ECR
@@ -23,7 +29,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
-          aws ecr get-login-password --region $AWS_REGION | \
+          echo "Authenticating with ECR in region $AWS_REGION"
+          aws ecr get-login-password --region "$AWS_REGION" | \
             docker login --username AWS --password-stdin 792394825386.dkr.ecr.$AWS_REGION.amazonaws.com
 
       # Install Grype
@@ -31,6 +38,6 @@ jobs:
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
 
-      # Scan image for vulnerabilities
+      # Scan image for vulnerabilities (fail if high severity found)
       - name: Scan ECR image with Grype
         run: grype ${{ github.event.inputs.image }} --fail-on high --output table
