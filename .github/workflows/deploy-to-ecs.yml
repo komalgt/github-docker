@@ -5,56 +5,70 @@ on:
     branches:
       - main
 
+env:
+  AWS_REGION: ap-south-1                  # Update as needed
+  ECR_REPOSITORY: myappservice            # Your ECR repository name
+  ECS_CLUSTER: doc-cluster            # Your ECS cluster name
+  ECS_SERVICE: doc-task-service            # Your ECS service name
+  TASK_DEFINITION_FAMILY: doc-task # Your ECS task definition name
+  CONTAINER_NAME: doc-task                    # Container name inside task def
+  IMAGE_TAG: ${{ github.sha }}           # Use Git SHA for image tag
+
 jobs:
-  build-and-deploy:
+  deploy:
+    name: Build, Push & Deploy
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-      # Set up AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION || 'ap-south-1' }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      # Login to Amazon ECR
       - name: Login to Amazon ECR
         run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION || 'ap-south-1' }} |
-          docker login --username AWS --password-stdin 792394825386.dkr.ecr.ap-south-1.amazonaws.com
+          aws ecr get-login-password --region $AWS_REGION | \
+            docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com
 
-      # Build the Docker image
       - name: Build Docker image
         run: |
-          docker build -t myappservice:${{ github.sha }} .
+          docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
 
-      # Tag image for ECR
       - name: Tag Docker image
         run: |
-          docker tag myappservice:${{ github.sha }} 792394825386.dkr.ecr.ap-south-1.amazonaws.com/myappservice:${{ github.sha }}
+          docker tag $ECR_REPOSITORY:$IMAGE_TAG ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # Push image to ECR
       - name: Push Docker image to Amazon ECR
         run: |
-          docker push 792394825386.dkr.ecr.ap-south-1.amazonaws.com/myappservice:${{ github.sha }}
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # Update task definition with new image
-      - name: Prepare new ECS task definition
+      - name: Download current ECS task definition
         id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: ecs-task-def.json # Path in your repo (see notes below)
-          container-name: myappservice
-          image: 792394825386.dkr.ecr.ap-south-1.amazonaws.com/myappservice:${{ github.sha }}
+        run: |
+          aws ecs describe-task-definition --task-definition $TASK_DEFINITION_FAMILY > task-def.json
 
-      # Deploy updated task definition to ECS
-      - name: Deploy to ECS service
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: my-ecs-service
-          cluster: my-ecs-cluster
+      - name: Update task definition with new image
+        id: new-task-def
+        run: |
+          IMAGE_URI="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}"
+          jq --arg IMAGE_URI "$IMAGE_URI" --arg CONTAINER_NAME "$CONTAINER_NAME" '
+            .taskDefinition |
+            .containerDefinitions |=
+              (map(if .name == $CONTAINER_NAME then .image = $IMAGE_URI else . end)) |
+            del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
+          ' task-def.json > new-task-def.json
+
+      - name: Register new ECS task definition revision
+        id: register-task-def
+        run: |
+          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://new-task-def.json --query "taskDefinition.taskDefinitionArn" --output text)
+          echo "NEW_TASK_DEF_ARN=$NEW_TASK_DEF_ARN" >> $GITHUB_ENV
+
+      - name: Update ECS service to new task definition
+        run: |
+          aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $NEW_TASK_DEF_ARN
