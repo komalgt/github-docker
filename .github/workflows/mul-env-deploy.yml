@@ -1,4 +1,4 @@
-name: ECS Deploy
+name: ECS Deploy for multiple env.
 
 on:
   workflow_dispatch:
