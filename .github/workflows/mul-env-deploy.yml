@@ -16,7 +16,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      AWS_REGION: us-east-1 # Adjust this as needed
+      AWS_REGION: ap-south-1 
 
     steps:
       - name: Checkout repository
