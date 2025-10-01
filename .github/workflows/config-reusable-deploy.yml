@@ -1,0 +1,19 @@
+on:
+  workflow_call:
+    inputs:
+      cpu:
+        required: true
+        type: string
+      memory:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show received config
+        run: |
+          echo "CPU: ${{ inputs.cpu }}"
+          echo "Memory: ${{ inputs.memory }}"
+      # Add deployment steps here using the configuration
