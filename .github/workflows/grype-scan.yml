@@ -12,15 +12,16 @@ jobs:
   grype-scan:
     runs-on: ubuntu-latest
     steps:
-      # (Optional) Checkout your repo
+      # Checkout (optional)
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      # Install AWS CLI (if not present)
-      - name: Install AWS CLI
+      # Install AWS CLI using official script (works on Ubuntu Noble)
+      - name: Install AWS CLI v2
         run: |
-          sudo apt-get update
-          sudo apt-get install -y awscli
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
 
       # Authenticate to ECR
       - name: Authenticate to ECR
@@ -29,7 +30,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
-          echo "Authenticating with ECR in region $AWS_REGION"
           aws ecr get-login-password --region "$AWS_REGION" | \
             docker login --username AWS --password-stdin 792394825386.dkr.ecr.$AWS_REGION.amazonaws.com
 
