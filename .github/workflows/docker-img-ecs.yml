@@ -5,9 +5,7 @@ on:
     inputs:
       rollback:
         description: 'Set true to trigger rollback, false for deploy'
-        required: false
-        default: 'false'
-        type: boolean
+        type: string
       previous_image_tag:
         description: 'Image tag to roll back to (required if rollback=true)'
         required: false
