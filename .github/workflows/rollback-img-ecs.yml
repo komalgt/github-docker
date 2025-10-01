@@ -98,34 +98,4 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
-  email_notify_success:
-    needs: [deploy, rollback]
-    if: ${{ success() }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.SMTP_USER }}
-          password: ${{ secrets.SMTP_PASS }}
-          to: kturakannavar@deloitte.com
-          from: komalgt@gmail.com
-          subject: 'ECS Workflow Succeeded'
-          body: 'The ECS workflow was successful. Check workflow run for details.'
-
-  email_notify_failure:
-    needs: [deploy, rollback]
-    if: ${{ failure() }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.SMTP_USER }}
-          password: ${{ secrets.SMTP_PASS }}
-          to: kturakannavar@deloitte.com
-          from: komalgt@gmail.com
-          subject: 'ECS Workflow FAILED'
-          body: 'The ECS workflow failed. Please check workflow logs for troubleshooting.'
+  
