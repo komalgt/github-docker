@@ -1,7 +1,6 @@
 name: Deploy or Rollback image to ECS
 
 on:
-  push:
   workflow_dispatch:
     inputs:
       rollback:
