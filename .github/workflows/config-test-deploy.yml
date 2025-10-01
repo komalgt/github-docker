@@ -31,7 +31,7 @@ jobs:
 
   call-reusable:
     needs: configure-and-call
-    uses: your-org/your-repo/.github/workflows/reusable-deploy.yml@main
+    uses: your-org/your-repo/.github/workflows/config-reusable-deploy.yml@main
     with:
       cpu: ${{ needs.configure-and-call.outputs.cpu }}
       memory: ${{ needs.configure-and-call.outputs.memory }}
