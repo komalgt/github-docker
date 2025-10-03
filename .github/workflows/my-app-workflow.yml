@@ -16,7 +16,7 @@ on:
 
 jobs:
   use-reusable-workflow:
-    uses: ./.github/workflows/reusable-template.yml
+    uses: ./.github/workflows/1sttask-reusable-template.yml
     with:
       build_script: "npm install && npm run build"
       test_script: "npm test"
