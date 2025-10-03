@@ -1,4 +1,4 @@
-name: Reusablee Build/Test/Deploy step
+name: Reusable Build/Test/Deploy Step
 
 on:
   workflow_call:
@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Build step
         run: ${{ inputs.build_script }}
 
