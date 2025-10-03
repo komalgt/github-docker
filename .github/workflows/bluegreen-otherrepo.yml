@@ -4,7 +4,9 @@ on:
   push:
     branches:
       - main
-
+          paths:
+      - blurgreen.yml
+      - .github/workflows/blurgreen.yml
 jobs:
   deploy:
     uses: komalgt/github-docker/.github/workflows/ecs-blue-green-reusable.yml@main
