@@ -1,4 +1,4 @@
-name: Main Workflow-Build/Test/Deploy and Docker
+name: Main Workflow-Build/Test/Deploy and Dockerr
 
 on:
   push:
