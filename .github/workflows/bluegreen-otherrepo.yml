@@ -1,4 +1,4 @@
-name: Deploy to ECS (Blue/Green..)
+name: Deploy to ECS (Blue/Green)
 
 on:
   push:
