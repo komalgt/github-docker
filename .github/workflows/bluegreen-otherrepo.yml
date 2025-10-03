@@ -7,7 +7,8 @@ on:
 
 jobs:
   deploy:
-    uses: <org>/<central-repo>/.github/workflows/ecs-blue-green.yml@main
+    uses: uses: komalgt/github-docker/.github/workflows/ecs-blue-green.yml@main
+
     with:
       aws-region: 'ap-south-1'
       cluster: 'doc-cluster'
