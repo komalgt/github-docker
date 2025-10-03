@@ -34,7 +34,4 @@ jobs:
             --service ${{ inputs.service }} \
             --force-new-deployment \
             --task-definition ${{ inputs.task-definition-arn }}
-        
-      - name: Monitor Deployment
-        run: |
-          # (Optional) Add logic to monitor rollout, validate health checks, revert if failure.
+            
