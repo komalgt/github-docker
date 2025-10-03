@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    uses: komalgt/github-docker/.github/workflows/ecs-blue-green.yml@main
+    uses: komalgt/github-docker/.github/workflows/ecs-blue-green-reusable.yml@main
     with:
       aws-region: 'ap-south-1'
       cluster: 'doc-cluster'
