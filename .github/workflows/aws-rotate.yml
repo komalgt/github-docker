@@ -1,0 +1,32 @@
+name: Rotate AWS Credentials
+
+on:
+  workflow_dispatch: # Manual trigger
+  schedule:
+    - cron: '0 3 1 * *' # Monthly at 3am UTC
+
+jobs:
+  rotate-aws-credentials:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          pip install boto3 requests pynacl
+
+      - name: Rotate AWS keys and update GitHub secrets
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1 # or your region
+          GITHUB_TOKEN: ${{ secrets.REPO_ADMIN_TOKEN }} # PAT with repo/secrets permission
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          IAM_USER_NAME: deploy-user # your deploy IAM user
+        run: python .github/scripts/rotate_and_update_secrets.py
