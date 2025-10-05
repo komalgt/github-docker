@@ -1,15 +1,16 @@
 name: Deploy, Load Test, and Report
 
 on:
-  workflow_dispatch:  
+  workflow_dispatch:
 
 jobs:
   ecs-deploy-and-test:
     runs-on: ubuntu-latest
+
     env:
-      CLUSTER: ${{ secrets.ECS_CLUSTER }}
-      SERVICE: ${{ secrets.ECS_SERVICE }}
-      APP_URL: ${{ secrets.APP_URL }}
+      CLUSTER:ecs-apache
+      SERVICE:ecs-apache-taskdef-service-y7ly6hcs
+      APP_URL: http://testload-1612528680.ap-south-1.elb.amazonaws.com/
 
     steps:
       - name: Checkout code
@@ -30,7 +31,6 @@ jobs:
         run: |
           aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
 
-      # Option 2: Apache Bench
       - name: Install Apache Bench
         run: sudo apt-get install -y apache2-utils
 
@@ -39,7 +39,5 @@ jobs:
 
       - name: Report results in summary
         run: |
-          echo "### k6 Load Test Results" >> $GITHUB_STEP_SUMMARY
-          tail -20 k6_results.txt >> $GITHUB_STEP_SUMMARY
-          echo "\n### Apache Bench Results" >> $GITHUB_STEP_SUMMARY
+          echo "### Apache Bench Results" >> $GITHUB_STEP_SUMMARY
           grep "Requests per second\|Time per request\|Failed requests" ab_results.txt >> $GITHUB_STEP_SUMMARY
