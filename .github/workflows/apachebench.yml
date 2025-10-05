@@ -8,8 +8,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      CLUSTER:ecs-apache
-      SERVICE:ecs-apache-taskdef-service-y7ly6hcs
+      CLUSTER: ecs-apache
+      SERVICE: ecs-apache-taskdef-service-y7ly6hcs
       APP_URL: http://testload-1612528680.ap-south-1.elb.amazonaws.com/
 
     steps:
