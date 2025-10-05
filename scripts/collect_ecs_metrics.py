@@ -17,9 +17,9 @@ METRICS = [
     # Add more ECS metrics as needed
 ]
 
-# Set time range to last week
-end = datetime.utcnow()
-start = end - timedelta(days=7)  # Last 7 days
+# Set time range to October 3rd, 2025 (UTC)
+start = datetime(2025, 10, 3, 0, 0, 0)   # 2025-10-03 00:00:00 UTC
+end   = datetime(2025, 10, 3, 23, 59, 59) # 2025-10-03 23:59:59 UTC
 
 def get_metric(metric):
     response = cloudwatch.get_metric_statistics(
@@ -31,12 +31,11 @@ def get_metric(metric):
         ],
         StartTime=start,
         EndTime=end,
-        Period=3600,  # 1 hour (reduced datapoint count)
+        Period=3600,  # 1 hour granularity
         Statistics=[metric["Stat"]],
         Unit=metric["Unit"]
     )
     datapoints = sorted(response['Datapoints'], key=lambda x: x['Timestamp'])
-    # Pick the latest datapoint, or None
     return datapoints[-1][metric["Stat"]] if datapoints else None
 
 with open(OUTFILE, "w", newline="") as f:
