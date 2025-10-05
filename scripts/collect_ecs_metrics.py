@@ -31,7 +31,7 @@ def get_metric(metric):
         ],
         StartTime=start,
         EndTime=end,
-        Period=300,  # 5 minutes (change if aggregation over week needed)
+        Period=3600,  # 1 hour (reduced datapoint count)
         Statistics=[metric["Stat"]],
         Unit=metric["Unit"]
     )
