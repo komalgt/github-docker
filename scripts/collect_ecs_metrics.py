@@ -3,7 +3,7 @@ import csv
 from datetime import datetime, timedelta
 import os
 
-REGION = os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')
+REGION = os.environ.get('AWS_DEFAULT_REGION', 'ap-south-1')
 CLUSTER = os.environ['ECS_CLUSTER']
 SERVICE = os.environ['ECS_SERVICE']
 OUTFILE = "ecs_metrics.csv"
