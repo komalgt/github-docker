@@ -28,5 +28,5 @@ jobs:
           AWS_DEFAULT_REGION: us-east-1 # or your region
           GITHUB_TOKEN: ${{ secrets.REPO_ADMIN_TOKEN }} # PAT with repo/secrets permission
           GITHUB_REPOSITORY: ${{ github.repository }}
-          IAM_USER_NAME: deploy-user # your deploy IAM user
+          IAM_USER_NAME: git-docker
         run: python scripts/rotate_and_update_secrets.py
