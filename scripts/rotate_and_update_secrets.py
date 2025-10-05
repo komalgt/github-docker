@@ -7,10 +7,7 @@ from nacl import encoding, public
 
 GITHUB_TOKEN = os.environ['GITHUB_TOKEN']
 GITHUB_REPOSITORY = os.environ['GITHUB_REPOSITORY']
-
-# Hardcoded IAM user name
 IAM_USER_NAME = "git-docker"
-
 AWS_ACCESS_KEY_ID = os.environ['AWS_ACCESS_KEY_ID']
 AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
 
@@ -20,6 +17,13 @@ def list_access_keys(iam_user):
                        aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
     response = iam.list_access_keys(UserName=iam_user)
     return response['AccessKeyMetadata']
+
+def find_oldest_active_key(keys):
+    active_keys = [k for k in keys if k['Status'] == 'Active']
+    if not active_keys:
+        return None
+    oldest = min(active_keys, key=lambda k: k['CreateDate'])
+    return oldest['AccessKeyId']
 
 def deactivate_old_key(iam_user, old_key_id):
     iam = boto3.client('iam',
@@ -71,9 +75,13 @@ def main():
 
     if len(keys) >= 2:
         print("Two or more access keys found for this user.")
-        print("Please delete an access key manually in the AWS Console before creating a new one.")
-        print("Aborting script to prevent exceeding AWS IAM key limit.")
-        return
+        print("Deactivating the oldest active key to proceed...")
+        old_key_id = find_oldest_active_key(keys)
+        if old_key_id:
+            deactivate_old_key(IAM_USER_NAME, old_key_id)
+        else:
+            print("No active access keys found to deactivate! Exiting.")
+            return
 
     print("Creating new AWS key...")
     new_access_key_id, new_secret_access_key = create_new_key(IAM_USER_NAME)
