@@ -21,13 +21,6 @@ def list_access_keys(iam_user):
     response = iam.list_access_keys(UserName=iam_user)
     return response['AccessKeyMetadata']
 
-def find_oldest_active_key(keys):
-    active_keys = [k for k in keys if k['Status'] == 'Active']
-    if not active_keys:
-        return None
-    oldest = min(active_keys, key=lambda k: k['CreateDate'])
-    return oldest['AccessKeyId']
-
 def deactivate_old_key(iam_user, old_key_id):
     iam = boto3.client('iam',
                        aws_access_key_id=AWS_ACCESS_KEY_ID,
@@ -75,13 +68,12 @@ def main():
     print("Listing current AWS access keys...")
     keys = list_access_keys(IAM_USER_NAME)
     print(f"Found {len(keys)} access keys.")
+
     if len(keys) >= 2:
-        print("2 or more access keys found, deactivating oldest active key...")
-        oldest_key_id = find_oldest_active_key(keys)
-        if oldest_key_id:
-            deactivate_old_key(IAM_USER_NAME, oldest_key_id)
-        else:
-            print("No active access keys to deactivate!")
+        print("Two or more access keys found for this user.")
+        print("Please delete an access key manually in the AWS Console before creating a new one.")
+        print("Aborting script to prevent exceeding AWS IAM key limit.")
+        return
 
     print("Creating new AWS key...")
     new_access_key_id, new_secret_access_key = create_new_key(IAM_USER_NAME)
