@@ -23,4 +23,16 @@ jobs:
           pip install boto3 requests pynacl
 
       - name: Show active AWS Access Key ID
-        run: echo "Access Key
+        run: echo "Access Key ID is $AWS_ACCESS_KEY_ID"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+
+      - name: Rotate AWS keys and update GitHub secrets
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1 # or your region
+          GITHUB_TOKEN: ${{ secrets.REPO_ADMIN_TOKEN }} # PAT with repo/secrets permission
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          IAM_USER_NAME: git-docker
+        run: python scripts/rotate_and_update_secrets.py
