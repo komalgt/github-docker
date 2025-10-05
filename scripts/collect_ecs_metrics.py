@@ -17,8 +17,9 @@ METRICS = [
     # Add more ECS metrics as needed
 ]
 
+# Set time range to last week
 end = datetime.utcnow()
-start = end - timedelta(hours=1)  # Last hour
+start = end - timedelta(days=7)  # Last 7 days
 
 def get_metric(metric):
     response = cloudwatch.get_metric_statistics(
@@ -30,7 +31,7 @@ def get_metric(metric):
         ],
         StartTime=start,
         EndTime=end,
-        Period=300,  # 5 minutes
+        Period=300,  # 5 minutes (change if aggregation over week needed)
         Statistics=[metric["Stat"]],
         Unit=metric["Unit"]
     )
