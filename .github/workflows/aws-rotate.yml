@@ -1,7 +1,7 @@
 name: Rotate AWS Credentials
 
 on:
-  workflow_dispatch: # Manual trigger
+  workflow_dispatch: 
   schedule:
     - cron: '0 3 1 * *' # Monthly at 3am UTC
 
@@ -29,4 +29,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.REPO_ADMIN_TOKEN }} # PAT with repo/secrets permission
           GITHUB_REPOSITORY: ${{ github.repository }}
           IAM_USER_NAME: deploy-user # your deploy IAM user
-        run: python .github/scripts/rotate_and_update_secrets.py
+        run: python scripts/rotate_and_update_secrets.py
