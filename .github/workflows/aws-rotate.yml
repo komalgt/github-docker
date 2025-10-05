@@ -8,6 +8,7 @@ on:
 jobs:
   rotate-aws-credentials:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -21,12 +22,12 @@ jobs:
         run: |
           pip install boto3 requests pynacl
 
-      - name: Rotate AWS keys and update GitHub secrets
+      # <<< Inserted step to display the active AWS Access Key ID
+      - name: Show active AWS Access Key ID
+        run: echo "Access Key ID is $AWS_ACCESS_KEY_ID"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1 # or your region
-          GITHUB_TOKEN: ${{ secrets.REPO_ADMIN_TOKEN }} # PAT with repo/secrets permission
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          IAM_USER_NAME: git-docker
-        run: python scripts/rotate_and_update_secrets.py
+      # >>>
+
+      - name: Rotate AWS keys and update GitHub secrets
+        env:
