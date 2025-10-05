@@ -22,12 +22,5 @@ jobs:
         run: |
           pip install boto3 requests pynacl
 
-      # <<< Inserted step to display the active AWS Access Key ID
       - name: Show active AWS Access Key ID
-        run: echo "Access Key ID is $AWS_ACCESS_KEY_ID"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      # >>>
-
-      - name: Rotate AWS keys and update GitHub secrets
-        env:
+        run: echo "Access Key
