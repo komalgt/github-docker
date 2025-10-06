@@ -26,11 +26,7 @@ jobs:
       - name: Update ECS service
         run: |
           aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" --force-new-deployment
-
-      - name: Wait for ECS service tasks to stabilize
-        run: |
-          aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
-
+          
       - name: Install Apache Bench
         run: sudo apt-get install -y apache2-utils
 
