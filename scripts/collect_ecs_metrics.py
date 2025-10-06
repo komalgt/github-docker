@@ -18,8 +18,8 @@ METRICS = [
 ]
 
 # Set time range to October 3rd, 2025 (UTC)
-start = datetime(2025, 10, 3, 0, 0, 0)   # 2025-10-03 00:00:00 UTC
-end   = datetime(2025, 10, 3, 23, 59, 59) # 2025-10-03 23:59:59 UTC
+start = datetime(2025, 10, 5, 0, 0, 0)   # 2025-10-03 00:00:00 UTC
+end   = datetime(2025, 10, 7, 23, 59, 59) # 2025-10-03 23:59:59 UTC
 
 def get_metric(metric):
     response = cloudwatch.get_metric_statistics(
